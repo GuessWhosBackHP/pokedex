@@ -1,16 +1,26 @@
 package com.example.testmixapirecycler.activityPokemonDetails;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MenuItem;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.example.testmixapirecycler.MainActivity;
 import com.example.testmixapirecycler.R;
+import com.example.testmixapirecycler.fragment.DetailsFragment;
+import com.example.testmixapirecycler.fragment.EvoFragment;
 import com.example.testmixapirecycler.frenchPokemon.Flavor_text_entries;
 import com.example.testmixapirecycler.frenchPokemon.IPokeFrench;
 import com.example.testmixapirecycler.frenchPokemon.IPokeFrenchName;
@@ -19,6 +29,9 @@ import com.example.testmixapirecycler.frenchPokemon.RetrofitClientPokeFrench;
 import com.example.testmixapirecycler.pokemonChargement.RetrofitClientPokeCharge;
 import com.example.testmixapirecycler.pokemon_Details.IPokeDetails;
 import com.example.testmixapirecycler.pokemon_Details.Pokemon;
+import com.example.testmixapirecycler.pokemon_Details.RetrofitClientPoke;
+import com.example.testmixapirecycler.pokemon_Details.Type;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.List;
 
@@ -29,52 +42,82 @@ import retrofit2.Retrofit;
 
 public class Activity_Pokemon_Details extends AppCompatActivity {
     private ImageView imageView ;
-    private TextView textViewTaille ;
-    private TextView textViewDesc ;
     private TextView textViewNom ;
-    private TextView textViewPoids ;
-    private TextView textViewType ;
+    private LinearLayout linearLayout;
+    private int id ;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.details_pokemon);
+        setContentView(R.layout.activity__pokemon__details);
+
         //recuperation id pokemon cliqué
         Intent intent = getIntent();
-        int id = 0;
+        setButtons();
+        id = 0;
         if(intent.hasExtra("id_poke"))
         {
         id=intent.getIntExtra("id_poke",0);
         }
+        setTitle("Pokemon n° "+id);
 
-        //Remplissage
-        setButtons();
-        chargementDescFrench(id);
-        chargementDetailsPokemon(id);
+
+        BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
+        bottomNav.setOnNavigationItemSelectedListener(navListener);
+
+
+
+
+        ChangeNavBavColor(id);
+
+
+
+        //--------------Bundle Details par defaut
+
+        DetailsFragment DetailsFrag = new DetailsFragment();
+        Bundle bundleDesc = new Bundle();
+        bundleDesc.putInt("Desc",id);
+        DetailsFrag.setArguments(bundleDesc);
+        FragmentManager manager = getSupportFragmentManager();
+        FragmentTransaction t=manager.beginTransaction();
+       t.replace(R.id.fragment_container, DetailsFrag).commit();
+
+
+
+       //Remplissage elements
         chargementNameFrench(id);
+
         Glide.with(this).load("https://pokeres.bastionbot.org/images/pokemon/"+id+".png").into(imageView);
-        
-
-    }
-    public void setButtons()
-    {
-        imageView = findViewById(R.id.ImageView_Details);
-        textViewDesc = findViewById(R.id.textView_Description);
-        textViewNom = findViewById(R.id.textView_Nom);
-        textViewPoids = findViewById(R.id.textView_Poids);
-        textViewTaille = findViewById(R.id.textView_Taille);
-        textViewType = findViewById(R.id.textView_Type);
-
 
 
     }
-    public double ajoutvirguleValeurAPI (int sansvirgule)
-    {
-        double res = 0 ;
-        res = (double)sansvirgule /10 ;
-        return res ;
-    }
 
-    public void chargementDetailsPokemon(int id )
+    private BottomNavigationView.OnNavigationItemSelectedListener navListener = new BottomNavigationView.OnNavigationItemSelectedListener() {
+        @Override
+        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+            Fragment selectedFragment = null;
+            switch (item.getItemId())
+            {
+                case R.id.nav_details:
+                    selectedFragment = new DetailsFragment();
+                    break;
+                case R.id.nav_evo:
+                    selectedFragment = new EvoFragment();
+                    break;
+
+            }
+
+            Bundle bundleDesc = new Bundle();
+            bundleDesc.putInt("Desc",id);
+            selectedFragment.setArguments(bundleDesc);
+            FragmentManager manager = getSupportFragmentManager();
+
+            FragmentTransaction t=manager.beginTransaction();
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,selectedFragment).commit();
+
+            return true;
+        }
+    };
+    public void ChangeNavBavColor(int id)
     {
         Retrofit retrofit = RetrofitClientPokeCharge.getInstance();
         IPokeDetails iPokeDetails = retrofit.create(IPokeDetails.class);
@@ -87,22 +130,89 @@ public class Activity_Pokemon_Details extends AppCompatActivity {
                     Log.d("debug", String.valueOf(response.code()));
                     return;
                 }
+                String res="#797C47";
                 Pokemon pokemon = response.body();
-                double poids , taille ;
-                poids = ajoutvirguleValeurAPI(Integer.parseInt(pokemon.getWeight()));
-                taille = ajoutvirguleValeurAPI(Integer.parseInt(pokemon.getHeight()));
-                textViewPoids.setText("Poids : "+ poids + " Kg" );
-                textViewTaille.setText("Taille : " + taille + " m");
-                String content="Types : ";
-                for(int i=0; i<pokemon.getTypes().size();i++)
+                String TypeColor = pokemon.getTypes().get(0).getType().getName() ;
+        linearLayout = findViewById(R.id.rectanglenul);
+                switch (TypeColor)
                 {
-                    if(i==0)
-                        content+=pokemon.getTypes().get(i).getType().name;
-                    else
-                        content+= "-"+pokemon.getTypes().get(i).getType().name  ;
-                }
-                textViewType.setText(content);
+                    case "normal" :
+                        res = "#797C47";
+                        linearLayout.setBackgroundResource(R.drawable.rect_normal);
+                        break;
+                    case "grass" :
+                        res = "#1CD41C";
+                        linearLayout.setBackgroundResource(R.drawable.rect_grass);
+                        break;
+                    case "water" :
+                        res = "#073AB1";
+                        linearLayout.setBackgroundResource(R.drawable.rect_water);
+                        break;
+                    case "fire" :
+                        res = "#D74107";
+                        linearLayout.setBackgroundResource(R.drawable.rect_fire);
+                        break;
+                    case "fighting" :
+                        res = "#731B1B";
+                        linearLayout.setBackgroundResource(R.drawable.rect_fighting);
+                        break;
+                    case "electric" :
+                        res = "#E9D307";
+                        linearLayout.setBackgroundResource(R.drawable.rect_electric);
+                        break;
+                    case "ice" :
+                        res = "#4CE8E5";
+                        linearLayout.setBackgroundResource(R.drawable.rect_ice);
+                        break;
+                    case "poison" :
+                        res = "#79048F";
+                        linearLayout.setBackgroundResource(R.drawable.rect_poison);
+                        break;
+                    case "ground" :
+                        res = "#B0BA28";
+                        linearLayout.setBackgroundResource(R.drawable.rect_ground);
+                        break;
+                    case "flying" :
+                        res = "#87B8DE";
+                        linearLayout.setBackgroundResource(R.drawable.rect_flying);
+                        break;
+                    case "psychic" :
+                        res = "#E644EB";
+                        linearLayout.setBackgroundResource(R.drawable.rect_psychic);
+                        break;
+                    case "bug" :
+                        res = "#77C63A";
+                        linearLayout.setBackgroundResource(R.drawable.rect_bug);
+                        break;
+                    case "rock" :
+                        res = "#92B042";
+                        linearLayout.setBackgroundResource(R.drawable.rect_rock);
+                        break;
+                    case "ghost" :
+                        res = "#705698";
+                        linearLayout.setBackgroundResource(R.drawable.rect_ghost);
+                        break;
+                    case "dark" :
+                        res = "#37353C";
+                        linearLayout.setBackgroundResource(R.drawable.rect_dark);
+                        break;
+                    case "dragon" :
+                        res = "#2B0E75";
+                        linearLayout.setBackgroundResource(R.drawable.rect_dragon);
+                        break;
+                    case "steel" :
+                        res = "#79787D";
+                        linearLayout.setBackgroundResource(R.drawable.rect_steel);
+                        break;
+                    case "fairy" :
+                        res = "#CCB8C8";
+                        linearLayout.setBackgroundResource(R.drawable.rect_fairy);
+                        break;
 
+
+                }
+                BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
+                bottomNav.setBackgroundColor(Color.parseColor(res));
             }
 
             @Override
@@ -112,7 +222,19 @@ public class Activity_Pokemon_Details extends AppCompatActivity {
         });
 
 
+
     }
+    public void setButtons()
+    {
+        imageView = findViewById(R.id.ImageView_Details);
+        textViewNom = findViewById(R.id.textView_Nom);
+    }
+
+
+
+
+
+
     public void chargementNameFrench(int id )
     {
         Retrofit retrofit = RetrofitClientPokeFrench.getInstance();
@@ -144,38 +266,5 @@ public class Activity_Pokemon_Details extends AppCompatActivity {
         });
         
     }
-    public void chargementDescFrench(int id )
-    {
-        Retrofit retrofit = RetrofitClientPokeFrench.getInstance() ;
-        IPokeFrench iPokeFrench = retrofit.create(IPokeFrench.class);
-        Call<Flavor_text_entries> call= iPokeFrench.GetPokemonFrench(id);
-        call.enqueue(new Callback<Flavor_text_entries>() {
-            @Override
-            public void onResponse(Call<Flavor_text_entries> call, Response<Flavor_text_entries> response) {
-                if(!response.isSuccessful())
-                {
-                    Log.d("debug", String.valueOf(response.code()));
-                    return;
-                }
-                Flavor_text_entries flavor_text_entries = response.body();
-                for(int i = 0 ; i < flavor_text_entries.getFlavor_text_entries().size();i++)
-                {
-                    String tmp = flavor_text_entries.getFlavor_text_entries().get(i).getLanguage().getName() ;
-                        if(tmp.equals("fr")) {
-                            textViewDesc.setText(flavor_text_entries.getFlavor_text_entries().get(i).getFlavor_text());
-                
-                             break ; 
-                        }
-                }
-            }
 
-
-
-            @Override
-            public void onFailure(Call<Flavor_text_entries> call, Throwable t) {
-                Log.d("debug",t.getMessage());
-            }
-        });
-
-    }
 }

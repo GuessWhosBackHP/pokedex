@@ -18,7 +18,8 @@ import com.example.testmixapirecycler.activityPokemonDetails.Activity_Pokemon_De
 import java.util.ArrayList;
 
 public class PokeAdapter extends RecyclerView.Adapter<PokeAdapter.PokeViewHolder> {
-    private ArrayList<ItemPokemon> mPokeList;
+   // private ArrayList<ItemPokemon> mPokeList;
+    private ArrayList<Integer>mPokeList ;
     private onItemClickListener mListener ;
     private Context mContext ;
 
@@ -56,7 +57,12 @@ public class PokeAdapter extends RecyclerView.Adapter<PokeAdapter.PokeViewHolder
 
         }
     }
-    public PokeAdapter(ArrayList<ItemPokemon> pokeList, Context context)
+   /* public PokeAdapter(ArrayList<ItemPokemon> pokeList, Context context)
+    {
+        mPokeList = pokeList ;
+        mContext = context;
+    }*/
+    public PokeAdapter(ArrayList<Integer> pokeList, Context context)
     {
         mPokeList = pokeList ;
         mContext = context;
@@ -72,9 +78,11 @@ public class PokeAdapter extends RecyclerView.Adapter<PokeAdapter.PokeViewHolder
     @Override
     public void onBindViewHolder(@NonNull PokeViewHolder holder, int position) {
         //ici que l'on passe la valeur au ImageView
-        ItemPokemon currentItem =mPokeList.get(position);
+        int currentItem =mPokeList.get(position);
+      //  ItemPokemon currentItem =mPokeList.get(position);
 
-        Glide.with(mContext).load("https://pokeres.bastionbot.org/images/pokemon/"+(currentItem.getmImageRessource()+1)+".png").placeholder(R.drawable.ic_pika).into(holder.mImageView);
+
+        Glide.with(mContext).load("https://pokeres.bastionbot.org/images/pokemon/"+(currentItem)+".png").placeholder(R.drawable.ic_pika).into(holder.mImageView);
 
 
     }
